@@ -300,7 +300,7 @@ def outputs(job_id: str, filename: str):
         "middle_assembly.stl", "ring_assembly.stl", "pinky_assembly.stl",
     }
     is_component = bool(
-        re.fullmatch(r"(?:palm_plate|(?:thumb|index|middle|ring|pinky)_(?:ring_(?:mcp|pip|dip|ip)|palm_link|link_[1-3]))\.stl", filename)
+        re.fullmatch(r"(?:thumb_palm_bridge|palm_plate|(?:thumb|index|middle|ring|pinky)_(?:ring_(?:mcp|pip|dip|ip)|palm_link|link_[1-3]))\.stl", filename)
     )
     if filename not in allowed and filename != "orthosis_parts.zip" and not is_component:
         return jsonify({"error": "Unknown output file."}), 404

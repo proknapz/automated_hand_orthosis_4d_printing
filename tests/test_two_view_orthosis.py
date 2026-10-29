@@ -154,3 +154,5 @@ def test_generate_route_returns_assembled_and_part_urls(client, tmp_path, monkey
     assert payload["orthosis_url"].endswith("/orthosis.stl")
     assert payload["parts_zip_url"].endswith("/orthosis_parts.zip")
     assert payload["part_urls"]
+    bridge_url = next(url for url in payload["part_urls"] if url.endswith("/thumb_palm_bridge.stl"))
+    assert client.get(bridge_url).status_code == 200
