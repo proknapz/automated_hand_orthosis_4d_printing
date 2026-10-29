@@ -1,0 +1,38 @@
+# Core numerical and scientific computing
+numpy>=1.21.0
+scipy>=1.7.0
+
+# Flask photo-to-splint demo (CPU)
+flask>=3.0.0
+pillow>=9.0.0
+opencv-python-headless>=4.8.0
+# Later MediaPipe releases use built-in generic annotations (for example
+# list[Category]) that raise TypeError on Python 3.8.
+mediapipe==0.10.11
+protobuf>=3.20.3,<4
+# Prefer CPU wheels: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+torch>=2.1.0
+torchvision>=0.16.0
+transformers>=4.40.0
+open3d>=0.18.0
+trimesh>=4.0.0
+werkzeug>=3.0.0
+
+# Data processing
+pandas>=1.3.0
+
+# Visualization
+matplotlib>=3.4.0
+
+# Machine learning (used in existing code)
+scikit-learn>=0.24.0
+tensorflow>=2.6.0
+
+# Development and testing
+pytest>=6.2.0
+pytest-cov>=2.12.0
+
+# Code quality
+black>=21.5b0
+flake8>=3.9.0
+mypy>=0.910

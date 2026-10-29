@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Two-view hand orthosis mesh (prototype)</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <main class="layout">
+    <header>
+      <h1>Two-view hand orthosis mesh</h1>
+      <p class="disclaimer">
+        Research prototype. Two photos produce an estimated mesh, not a scan or fitted medical device.
+      </p>
+    </header>
+
+    <section class="panel">
+      <form id="upload-form">
+        <h2>1. Add matching hand views</h2>
+        <p class="hint">Use the same open, relaxed pose in both photos. Keep the full hand and wrist in frame.</p>
+        <label>
+          Dorsal photo — back of hand (JPG or PNG, up to 10 MB)
+          <input type="file" name="dorsal_photo" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required />
+        </label>
+        <label>
+          Palmar photo — palm side (JPG or PNG, up to 10 MB)
+          <input type="file" name="palmar_photo" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required />
+        </label>
+        <label>
+          Hand length, wrist crease to middle fingertip (cm)
+          <input type="number" name="hand_length_cm" min="8" max="28" step="0.1" value="18" required />
+        </label>
+        <label>
+          Hand side
+          <select name="hand_side">
+            <option value="auto" selected>Auto-detect</option>
+            <option value="left">Left hand</option>
+            <option value="right">Right hand</option>
+          </select>
+        </label>
+
+        <details>
+          <summary>Optional size and mesh parameters</summary>
+          <div class="parameter-grid">
+            <label>Palm breadth (cm)<input type="number" name="palm_breadth_cm" min="2.5" max="15" step="0.1" placeholder="Estimate from landmarks" /></label>
+            <label>Wrist width (cm)<input type="number" name="wrist_width_cm" min="2" max="12" step="0.1" placeholder="Estimate from palm width" /></label>
+            <label>Hand thickness (mm)<input type="number" name="palm_thickness_mm" min="6" max="50" step="0.5" value="18" /></label>
+            <label>Plate thickness (mm)<input type="number" name="plate_thickness_mm" min="1" max="10" step="0.2" value="3" /></label>
+            <label>Ring clearance (mm)<input type="number" name="ring_clearance_mm" min="0" max="8" step="0.2" value="2" /></label>
+            <label>Ring band width (mm)<input type="number" name="ring_band_width_mm" min="2" max="20" step="0.5" value="6" /></label>
+            <label>Ring wall thickness (mm)<input type="number" name="ring_wall_mm" min="1" max="8" step="0.2" value="2" /></label>
+          </div>
+          <p class="hint">Finger circumference overrides (mm). If blank, ring sizes are rough estimates derived from hand length.</p>
+          <div class="parameter-grid five-cols">
+            <label>Thumb<input type="number" name="finger_thumb_circumference_mm" min="15" max="100" step="0.5" placeholder="Estimate" /></label>
+            <label>Index<input type="number" name="finger_index_circumference_mm" min="15" max="100" step="0.5" placeholder="Estimate" /></label>
+            <label>Middle<input type="number" name="finger_middle_circumference_mm" min="15" max="100" step="0.5" placeholder="Estimate" /></label>
+            <label>Ring<input type="number" name="finger_ring_circumference_mm" min="15" max="100" step="0.5" placeholder="Estimate" /></label>
+            <label>Pinky<input type="number" name="finger_pinky_circumference_mm" min="15" max="100" step="0.5" placeholder="Estimate" /></label>
+          </div>
+          <label class="checkbox"><input type="checkbox" name="include_thumb" checked /> Include thumb support</label>
+        </details>
+        <button type="submit" id="analyze-button">Analyze photos</button>
+      </form>
+
+      <section id="review-panel" class="review-panel hidden" aria-labelledby="review-heading">
+        <h2 id="review-heading">2. Review landmarks</h2>
+        <p class="hint">Drag any marker that is misplaced. The two views are aligned by corresponding landmarks; they are not treated as a calibrated stereo scan.</p>
+        <p id="handedness-note" class="hint"></p>
+        <div class="photo-review-grid">
+          <article>
+            <h3>Dorsal</h3>
+            <p id="dorsal-confidence" class="confidence"></p>
+            <div class="photo-stage"><img id="dorsal-preview" alt="Dorsal hand view with detected landmarks" /><svg id="dorsal-overlay" role="img" aria-label="Draggable dorsal hand landmarks"></svg></div>
+          </article>
+          <article>
+            <h3>Palmar</h3>
+            <p id="palmar-confidence" class="confidence"></p>
+            <div class="photo-stage"><img id="palmar-preview" alt="Palmar hand view with detected landmarks" /><svg id="palmar-overlay" role="img" aria-label="Draggable palmar hand landmarks"></svg></div>
+          </article>
+        </div>
+        <div class="button-row">
+          <button type="button" id="generate-button">Generate hand preview and STL</button>
+          <button type="button" id="reset-button" class="secondary">Start over</button>
+        </div>
+      </section>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="viewer-wrap">
+      <div class="toggles">
+        <label><input type="checkbox" id="toggle-hand" checked /> Estimated hand</label>
+        <label><input type="checkbox" id="toggle-orthosis" checked /> Orthosis</label>
+        <label><input type="checkbox" id="toggle-landmarks" checked /> 3D landmarks</label>
+        <a id="dl-hand" class="btn disabled" href="#" download="hand_preview.ply">Download hand PLY</a>
+        <a id="dl-orthosis" class="btn disabled" href="#" download="orthosis.stl">Download assembled STL</a>
+      </div>
+      <div id="spinner" class="spinner hidden" aria-hidden="true"></div>
+      <canvas id="viewport"></canvas>
+      <div id="part-downloads" class="part-downloads"></div>
+      <p id="mesh-summary" class="mesh-summary"></p>
+    </section>
+  </main>
+  <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
