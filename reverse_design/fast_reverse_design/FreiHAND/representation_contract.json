@@ -1,0 +1,84 @@
+{
+  "status": "prototype_engineering_contract_not_clinically_approved",
+  "representation_type": "3d_surface_and_keypoint_occupancy",
+  "spatial_shape": [96, 96, 96],
+  "axis_order": ["X", "Y", "Z"],
+  "channels_last": true,
+  "full_shape": [96, 96, 96, 22],
+  "dtype": "uint8",
+  "value_range": [0, 1],
+  "bounds": [-1.0, 1.0],
+  "bounds_apply_per_axis": true,
+  "origin": {
+    "grid_index_0_cell_min_corner": [-1.0, -1.0, -1.0],
+    "coordinate_origin_index_location": "cube_center"
+  },
+  "input_geometry_convention": {
+    "units": "m; official evaluator multiplies raw XYZ mean error by 100 to report centimeters",
+    "coordinate_frame": "camera-relative projection frame inferred from official use of K; encoder preserves published XYZ",
+    "formal_origin_axes_handedness": "origin, axis signs, and handedness not explicitly specified in inspected official sources"
+  },
+  "orientation": {
+    "encoder_transform": "none; preserve input XYZ axes",
+    "anatomical_axis_convention": "not an anatomical canonical frame; do not rotate or reflect without an approved transform"
+  },
+  "physical_scale": "not embedded; retain upstream inverse-transform metadata and meter-valued reference-bone scale",
+  "cell_width": 0.020833333333333332,
+  "resolution_selection": {
+    "status": "selected_for_prototype_engineering_not_clinical_acceptance",
+    "tested_resolutions": [32, 48, 64, 96, 128],
+    "max_dense_tensor_mib_per_sample": 32,
+    "max_encode_seconds_per_sample": 5,
+    "selected_resolution": 96,
+    "selection_basis": "largest tested resolution within declared tensor-payload and runtime budgets while preserving all named landmark channels"
+  },
+  "channels": [
+    {
+      "index": 0,
+      "name": "vertex_or_surface_occupancy",
+      "meaning": "1 for cells hit by an input vertex or deterministic sample on an input triangle; FreiHAND annotations currently provide no faces, so validation marks vertices"
+    },
+    {
+      "index": "1-21",
+      "name": "named_freihand_keypoint_occupancy",
+      "meaning": "one channel for each keypoint in FREIHAND_KEYPOINT_NAMES order; identity remains encoded when landmarks share an XYZ cell"
+    }
+  ],
+  "keypoint_names": [
+    "wrist",
+    "thumb_joint_1", "thumb_joint_2", "thumb_joint_3", "thumb_tip",
+    "index_joint_1", "index_joint_2", "index_joint_3", "index_tip",
+    "middle_joint_1", "middle_joint_2", "middle_joint_3", "middle_tip",
+    "ring_joint_1", "ring_joint_2", "ring_joint_3", "ring_tip",
+    "pinky_joint_1", "pinky_joint_2", "pinky_joint_3", "pinky_tip"
+  ],
+  "triangle_sampling": "deterministic barycentric lattice; longest-edge spacing at most half a voxel width",
+  "out_of_bounds_policy": "raise ValueError; do not clip",
+  "decoder": "occupied cell centers only; lossy point approximation",
+  "prototype_engineering_checks": {
+    "point_to_cell_center_max_normalized": 0.018042195912175804,
+    "per_axis_depth_to_cell_center_max_normalized": 0.010416666666666666,
+    "two_point_distance_error_max_normalized": 0.03608439182435161,
+    "normalization": "multiply normalized error bounds by per-sample GeometryTransform.scale to report source meters",
+    "all_named_landmark_channels_must_be_populated": true,
+    "silent_clipping_allowed": false,
+    "deterministic_output_required": true,
+    "max_dense_tensor_mib_per_sample": 32,
+    "max_encode_seconds_per_sample": 5,
+    "limits_exclude": ["temporary arrays", "model activations", "batch storage"],
+    "status": "engineering_checks_only_not_fit_or_clinical_tolerances"
+  },
+  "limitations": [
+    "point/depth/fingertip-separation tolerances are not clinically approved",
+    "50 real FreiHAND training samples passed prototype normalization and encoder checks; this is not clinical validation",
+    "vertices-only input does not reconstruct surface between vertices",
+    "FreiHAND archive contains no faces or anatomical surface-region labels; MANO topology requires authorized asset and vertex-correspondence validation",
+    "camera-frame origin, axis signs, and handedness remain unspecified in inspected official references",
+    "topology, normals, signed distance, absolute scale, and true inter-surface finger clearance are not encoded"
+  ],
+  "domain_review": {
+    "status": "deferred_for_prototype; required_before_fit_or_clinical_claims",
+    "questionnaire": "domain_requirements_review.md",
+    "reviewer_approved_thresholds": null
+  }
+}
