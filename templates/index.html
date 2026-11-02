@@ -68,6 +68,23 @@
             <label>Pinky<input type="number" name="finger_pinky_circumference_mm" min="15" max="100" step="0.5" placeholder="Estimate" /></label>
           </div>
           <label class="checkbox"><input type="checkbox" name="include_thumb" checked /> Include thumb support</label>
+
+          <h3>Component Size Adjustments</h3>
+          <p class="hint">Use sliders to adjust component sizes in real-time</p>
+          <div class="parameter-grid">
+            <label>
+              Overhang Size: <span id="overhang-value">1.0</span>x
+              <input type="range" name="overhang_size_multiplier" min="0.5" max="2.0" step="0.1" value="1.0" class="slider" />
+            </label>
+            <label>
+              Connector Width: <span id="connector-width-value">1.0</span>x
+              <input type="range" name="connector_width_multiplier" min="0.5" max="2.0" step="0.1" value="1.0" class="slider" />
+            </label>
+            <label>
+              Connector Height: <span id="connector-height-value">1.0</span>x
+              <input type="range" name="connector_height_multiplier" min="0.5" max="2.0" step="0.1" value="1.0" class="slider" />
+            </label>
+          </div>
         </details>
         <button type="submit" id="analyze-button">Analyze photos</button>
       </form>

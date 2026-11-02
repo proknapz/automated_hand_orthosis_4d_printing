@@ -179,6 +179,9 @@ def generate_pair():
             "ring_band_width_mm": request.form.get("ring_band_width_mm", 6),
             "ring_wall_mm": request.form.get("ring_wall_mm", 2),
             "include_thumb": request.form.get("include_thumb", "true"),
+            "overhang_size_multiplier": request.form.get("overhang_size_multiplier", 1.0),
+            "connector_width_multiplier": request.form.get("connector_width_multiplier", 1.0),
+            "connector_height_multiplier": request.form.get("connector_height_multiplier", 1.0),
             "finger_circumferences_mm": {
                 digit: request.form.get("finger_%s_circumference_mm" % digit)
                 for digit in ("thumb", "index", "middle", "ring", "pinky")

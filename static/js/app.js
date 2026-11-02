@@ -394,3 +394,20 @@ document.getElementById("toggle-orthosis").addEventListener("change", (event) =>
 document.getElementById("toggle-landmarks").addEventListener("change", (event) => {
   if (landmarkGroup) landmarkGroup.visible = event.target.checked;
 });
+
+// Handle slider value display updates
+const sliders = document.querySelectorAll(".slider");
+sliders.forEach(slider => {
+  slider.addEventListener("input", (e) => {
+    const value = parseFloat(e.target.value).toFixed(1);
+    const name = e.target.name;
+    if (name === "overhang_size_multiplier") {
+      document.getElementById("overhang-value").textContent = value;
+    } else if (name === "connector_width_multiplier") {
+      document.getElementById("connector-width-value").textContent = value;
+    } else if (name === "connector_height_multiplier") {
+      document.getElementById("connector-height-value").textContent = value;
+    }
+  });
+});
+

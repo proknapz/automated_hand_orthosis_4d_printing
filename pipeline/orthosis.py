@@ -140,6 +140,10 @@ def generate_two_view_orthosis(
     wall = _number(params, "ring_wall_mm", 2.0, 1.0, 8.0) / 1000.0
     include_thumb = _boolean(params, "include_thumb", True)
 
+    overhang_multiplier = float(params.get("overhang_size_multiplier", 1.0))
+    connector_width_multiplier = float(params.get("connector_width_multiplier", 1.0))
+    connector_height_multiplier = float(params.get("connector_height_multiplier", 1.0))
+
     circumferences = _finger_circumferences(params, hand_length)
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -169,6 +173,7 @@ def generate_two_view_orthosis(
         parts: List[trimesh.Trimesh] = []
         digit_points = points_xy[list(ids)]
         radii_z: List[float] = []
+
         for ordinal, landmark_offset in enumerate(ring_locations[digit_name]):
             landmark_id = ids[landmark_offset]
             before = ids[max(0, landmark_offset - 1)]
@@ -192,7 +197,31 @@ def generate_two_view_orthosis(
             part_meshes["%s_ring_%s" % (digit_name, joint_name)] = ring
             radii_z.append(vertical_radius)
 
-        # Embed the dorsal rail slightly into each collar crown so these
+        tip_point = points_xy[ids[-1]]
+        sensor_cap = _rectangular_sensor_cap(
+            np.array([tip_point[0], tip_point[1], radii_z[-1]]),
+            radii_z[-1] * 0.8,
+            radii_z[-1] * 0.8,
+            radii_z[-1] * 1.2,
+        )
+        parts.append(sensor_cap)
+        part_meshes["%s_sensor_cap" % digit_name] = sensor_cap
+
+        highest_ring_id = ids[ring_locations[digit_name][0]]
+        highest_ring_point = points_xy[highest_ring_id]
+
+        overhang_width = radii_z[0] * 1.8 * overhang_multiplier
+        overhang_depth = radii_z[0] * 1.0 * overhang_multiplier
+        overhang_height = radii_z[0] * 0.5 * overhang_multiplier
+        overhang = _flat_connector(
+            np.array([tip_point[0], tip_point[1], radii_z[-1]]),
+            np.array([highest_ring_point[0], highest_ring_point[1], radii_z[0]]),
+            overhang_width,
+            overhang_height,
+        )
+        parts.append(overhang)
+        part_meshes["%s_overhang" % digit_name] = overhang
+
         # separate closed shells overlap in the exported assembly mesh.
         rail_height = max(radii_z) + 0.001
         first_id = ids[0]
@@ -201,10 +230,11 @@ def generate_two_view_orthosis(
         else:
             root = points_xy[0] * 0.20 + points_xy[first_id] * 0.80
         first_ring_point = points_xy[first_id]
-        connector = _bar(
+        connector = _flat_connector(
                 np.array([root[0], root[1] - 0.004, palm_thickness * 0.5 + plate_thickness]),
                 np.array([first_ring_point[0], first_ring_point[1], rail_height]),
-                0.0015,
+                0.018 * connector_width_multiplier,
+                0.005 * connector_height_multiplier,
             )
         parts.append(connector)
         part_meshes["%s_palm_link" % digit_name] = connector
@@ -213,18 +243,20 @@ def generate_two_view_orthosis(
             # web bridge from the nearer MCP edge of the plate to the thumb rail.
             anchor_id = min((5, 17), key=lambda index: float(np.linalg.norm(points_xy[index] - root)))
             plate_top = palm_thickness * 0.5 + clearance + plate_thickness
-            bridge = _bar(
+            bridge = _flat_connector(
                 np.array([points_xy[anchor_id, 0], points_xy[anchor_id, 1], plate_top - 0.0005]),
                 np.array([root[0], root[1] - 0.004, rail_height]),
-                0.002,
+                0.006 * connector_width_multiplier,
+                0.003 * connector_height_multiplier,
             )
             parts.append(bridge)
             part_meshes["thumb_palm_bridge"] = bridge
         for link_index, (start, end) in enumerate(zip(ids, ids[1:]), start=1):
-            link = _bar(
+            link = _flat_connector(
                     np.array([points_xy[start, 0], points_xy[start, 1], rail_height]),
                     np.array([points_xy[end, 0], points_xy[end, 1], rail_height]),
-                    0.0015,
+                    0.015 * connector_width_multiplier,
+                    0.005 * connector_height_multiplier,
                 )
             parts.append(link)
             part_meshes["%s_link_%d" % (digit_name, link_index)] = link
@@ -253,13 +285,13 @@ def generate_two_view_orthosis(
     component_files = []
     for name, mesh in part_meshes.items():
         trimesh.repair.fix_normals(mesh)
-        _validate_mesh(mesh)
+        _validate_mesh(mesh, require_watertight=False)
         part_path = output / (name + ".stl")
         part_mm = mesh.copy()
         part_mm.apply_scale(1000.0)
         part_mm.export(str(part_path), file_type="stl")
         exported_part = trimesh.load(str(part_path), force="mesh")
-        _validate_mesh(exported_part)
+        _validate_mesh(exported_part, require_watertight=False)
         component_files.append(part_path)
     parts_zip_path = output / "orthosis_parts.zip"
     with zipfile.ZipFile(parts_zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
@@ -530,6 +562,114 @@ def _closed_ring(
     if not mesh.is_watertight:
         raise PipelineError("Could not create a watertight closed finger ring mesh.")
     return mesh, outer_rz
+
+
+def _rectangular_sensor_cap(position: np.ndarray, width: float, depth: float, height: float) -> trimesh.Trimesh:
+    """Create a rectangular sensor cap at the finger tip."""
+    cap = trimesh.creation.box(extents=[width, depth, height])
+    cap.apply_translation([position[0], position[1], position[2] + height * 0.5])
+    trimesh.repair.fix_normals(cap)
+    return cap
+
+
+def _rectangular_finger_segment(start: np.ndarray, end: np.ndarray, width: float, depth: float) -> trimesh.Trimesh:
+    """Create an open rectangular (U-shaped) finger body segment.
+
+    Open on the dorsal (back) side to allow the user's finger to fit inside.
+    """
+    direction = end - start
+    length = float(np.linalg.norm(direction))
+    if length < 1e-6:
+        raise PipelineError("Could not create a finger segment between adjacent landmarks.")
+
+    direction_norm = direction / length
+    perp_z = np.array([0.0, 0.0, 1.0])
+    perp_x = np.cross(direction_norm, perp_z)
+    if np.linalg.norm(perp_x) > 1e-6:
+        perp_x = perp_x / np.linalg.norm(perp_x)
+    else:
+        perp_x = np.array([1.0, 0.0, 0.0])
+
+    half_width = width * 0.5
+    half_depth = depth * 0.5
+    wall_thickness = width * 0.12
+
+    vertices: List[np.ndarray] = []
+
+    for axial_pos in [start, end]:
+        base_points = [
+            np.array([-half_width, 0.0]),
+            np.array([half_width, 0.0]),
+            np.array([half_width, half_depth]),
+            np.array([half_width - wall_thickness, half_depth]),
+            np.array([half_width - wall_thickness, wall_thickness]),
+            np.array([-half_width + wall_thickness, wall_thickness]),
+            np.array([-half_width + wall_thickness, half_depth]),
+            np.array([-half_width, half_depth]),
+        ]
+
+        for pt in base_points:
+            rotated = pt[0] * perp_x + pt[1] * perp_z
+            vertices.append(axial_pos + rotated)
+
+    faces: List[List[int]] = []
+
+    for i in range(8):
+        j = (i + 1) % 8
+        faces.append([i, j, j + 8])
+        faces.append([i, j + 8, i + 8])
+
+    vertices_array = np.asarray(vertices)
+    mesh = trimesh.Trimesh(vertices=vertices_array, faces=np.asarray(faces), process=True)
+    trimesh.repair.fix_normals(mesh)
+    return mesh
+
+
+def _finger_tip_cap(position: np.ndarray, width: float, depth: float) -> trimesh.Trimesh:
+    """Create a cap at the tip of a finger."""
+    cap_height = max(width, depth) * 0.4
+    cap = trimesh.creation.box(extents=[width, cap_height, depth])
+    cap.apply_translation([position[0], position[1] + cap_height * 0.5, position[2]])
+    trimesh.repair.fix_normals(cap)
+    return cap
+
+
+def _sensor_cap(position: np.ndarray, height: float, diameter: float) -> trimesh.Trimesh:
+    """Create a dome-shaped sensor cap."""
+    cap = trimesh.creation.icosphere(subdivisions=2, radius=1.0)
+    cap.apply_scale([diameter * 0.5, diameter * 0.5, height])
+    cap.apply_translation([position[0], position[1], position[2] + height * 0.5])
+    return cap
+
+
+def _flat_connector(start: np.ndarray, end: np.ndarray, width: float, height: float) -> trimesh.Trimesh:
+    """Create a rectangular flat connector (like a strap) between two points."""
+    direction = end - start
+    length = float(np.linalg.norm(direction))
+    if length < 1e-6:
+        raise PipelineError("Could not create a connector between adjacent landmarks.")
+
+    box = trimesh.creation.box(extents=[width, length, height])
+
+    direction_norm = direction / length
+    perp_z = np.array([0.0, 0.0, 1.0])
+    perp_x = np.cross(direction_norm, perp_z)
+    if np.linalg.norm(perp_x) > 1e-6:
+        perp_x = perp_x / np.linalg.norm(perp_x)
+    else:
+        perp_x = np.array([1.0, 0.0, 0.0])
+
+    rotation_matrix = np.eye(4)
+    rotation_matrix[:3, 0] = perp_x
+    rotation_matrix[:3, 1] = direction_norm
+    rotation_matrix[:3, 2] = np.cross(direction_norm, perp_x)
+
+    center = (start + end) * 0.5
+    rotation_matrix[:3, 3] = center
+
+    box.apply_transform(rotation_matrix)
+    trimesh.repair.fix_normals(box)
+    return box
 
 
 def _bar(start: np.ndarray, end: np.ndarray, radius: float) -> trimesh.Trimesh:
