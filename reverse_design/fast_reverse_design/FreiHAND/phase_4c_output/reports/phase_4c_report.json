@@ -1,0 +1,288 @@
+{
+  "metadata": {
+    "title": "Phase 4C: Orthosis Design Validation & Comparison",
+    "total_designs": 10
+  },
+  "designs": [
+    {
+      "rank_in_pareto": 1,
+      "composite_score": 0.7867,
+      "phase_4b_metrics": {
+        "support_quality": 0.8634,
+        "movement_preservation": 0.4978,
+        "material_efficiency": 0.925,
+        "fabrication_feasibility": 1.0
+      },
+      "phase_4c_fea": {
+        "design_rank": 1,
+        "voxel_count": 30,
+        "load_case": "STATIC_GRIP",
+        "max_stress_mpa": 36.0,
+        "peak_strain": 0.0112,
+        "max_deformation_mm": 0.04,
+        "material_utilization": 0.1,
+        "support_effectiveness": 0.451,
+        "passes_all_checks": false,
+        "simulation_time_s": 0.0
+      },
+      "phase_4c_stl": {
+        "vertices": 88,
+        "volume_mm3": 48.41,
+        "filename": "orthosis_rank_01.stl"
+      },
+      "clinical_recommendation": "High support (therapeutic/intensive) | Moderate mobility (functional support) | Ultra-lightweight (minimal print time) | FAILS one or more FEA checks [REVIEW]"
+    },
+    {
+      "rank_in_pareto": 3,
+      "composite_score": 0.7707,
+      "phase_4b_metrics": {
+        "support_quality": 0.8677,
+        "movement_preservation": 0.5026,
+        "material_efficiency": 0.8325,
+        "fabrication_feasibility": 1.0
+      },
+      "phase_4c_fea": {
+        "design_rank": 3,
+        "voxel_count": 67,
+        "load_case": "STATIC_GRIP",
+        "max_stress_mpa": 36.0,
+        "peak_strain": 0.0112,
+        "max_deformation_mm": 0.04,
+        "material_utilization": 0.223,
+        "support_effectiveness": 0.738,
+        "passes_all_checks": false,
+        "simulation_time_s": 0.0
+      },
+      "phase_4c_stl": {
+        "vertices": 313,
+        "volume_mm3": 343.36,
+        "filename": "orthosis_rank_03.stl"
+      },
+      "clinical_recommendation": "High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]"
+    },
+    {
+      "rank_in_pareto": 10,
+      "composite_score": 0.7675,
+      "phase_4b_metrics": {
+        "support_quality": 0.8909,
+        "movement_preservation": 0.4886,
+        "material_efficiency": 0.79,
+        "fabrication_feasibility": 1.0
+      },
+      "phase_4c_fea": {
+        "design_rank": 10,
+        "voxel_count": 84,
+        "load_case": "STATIC_GRIP",
+        "max_stress_mpa": 36.0,
+        "peak_strain": 0.0112,
+        "max_deformation_mm": 0.05,
+        "material_utilization": 0.28,
+        "support_effectiveness": 0.814,
+        "passes_all_checks": false,
+        "simulation_time_s": 0.0
+      },
+      "phase_4c_stl": {
+        "vertices": 375,
+        "volume_mm3": 155.3,
+        "filename": "orthosis_rank_10.stl"
+      },
+      "clinical_recommendation": "High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]"
+    },
+    {
+      "rank_in_pareto": 6,
+      "composite_score": 0.7656,
+      "phase_4b_metrics": {
+        "support_quality": 0.8753,
+        "movement_preservation": 0.4963,
+        "material_efficiency": 0.8,
+        "fabrication_feasibility": 1.0
+      },
+      "phase_4c_fea": {
+        "design_rank": 6,
+        "voxel_count": 80,
+        "load_case": "STATIC_GRIP",
+        "max_stress_mpa": 36.0,
+        "peak_strain": 0.0112,
+        "max_deformation_mm": 0.04,
+        "material_utilization": 0.267,
+        "support_effectiveness": 0.798,
+        "passes_all_checks": false,
+        "simulation_time_s": 0.0
+      },
+      "phase_4c_stl": {
+        "vertices": 363,
+        "volume_mm3": 251.83,
+        "filename": "orthosis_rank_06.stl"
+      },
+      "clinical_recommendation": "High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]"
+    },
+    {
+      "rank_in_pareto": 7,
+      "composite_score": 0.7656,
+      "phase_4b_metrics": {
+        "support_quality": 0.8658,
+        "movement_preservation": 0.5153,
+        "material_efficiency": 0.7975,
+        "fabrication_feasibility": 1.0
+      },
+      "phase_4c_fea": {
+        "design_rank": 7,
+        "voxel_count": 81,
+        "load_case": "STATIC_GRIP",
+        "max_stress_mpa": 36.0,
+        "peak_strain": 0.0112,
+        "max_deformation_mm": 0.05,
+        "material_utilization": 0.27,
+        "support_effectiveness": 0.802,
+        "passes_all_checks": false,
+        "simulation_time_s": 0.0
+      },
+      "phase_4c_stl": {
+        "vertices": 342,
+        "volume_mm3": 32.27,
+        "filename": "orthosis_rank_07.stl"
+      },
+      "clinical_recommendation": "High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]"
+    },
+    {
+      "rank_in_pareto": 2,
+      "composite_score": 0.7649,
+      "phase_4b_metrics": {
+        "support_quality": 0.8662,
+        "movement_preservation": 0.5161,
+        "material_efficiency": 0.7925,
+        "fabrication_feasibility": 1.0
+      },
+      "phase_4c_fea": {
+        "design_rank": 2,
+        "voxel_count": 83,
+        "load_case": "STATIC_GRIP",
+        "max_stress_mpa": 36.0,
+        "peak_strain": 0.0112,
+        "max_deformation_mm": 0.05,
+        "material_utilization": 0.277,
+        "support_effectiveness": 0.81,
+        "passes_all_checks": false,
+        "simulation_time_s": 0.0
+      },
+      "phase_4c_stl": {
+        "vertices": 356,
+        "volume_mm3": 65.4,
+        "filename": "orthosis_rank_02.stl"
+      },
+      "clinical_recommendation": "High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]"
+    },
+    {
+      "rank_in_pareto": 5,
+      "composite_score": 0.7635,
+      "phase_4b_metrics": {
+        "support_quality": 0.8531,
+        "movement_preservation": 0.5071,
+        "material_efficiency": 0.8175,
+        "fabrication_feasibility": 1.0
+      },
+      "phase_4c_fea": {
+        "design_rank": 5,
+        "voxel_count": 73,
+        "load_case": "STATIC_GRIP",
+        "max_stress_mpa": 36.0,
+        "peak_strain": 0.0112,
+        "max_deformation_mm": 0.04,
+        "material_utilization": 0.243,
+        "support_effectiveness": 0.768,
+        "passes_all_checks": false,
+        "simulation_time_s": 0.0
+      },
+      "phase_4c_stl": {
+        "vertices": 349,
+        "volume_mm3": 135.41,
+        "filename": "orthosis_rank_05.stl"
+      },
+      "clinical_recommendation": "High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]"
+    },
+    {
+      "rank_in_pareto": 8,
+      "composite_score": 0.7583,
+      "phase_4b_metrics": {
+        "support_quality": 0.8676,
+        "movement_preservation": 0.5132,
+        "material_efficiency": 0.76,
+        "fabrication_feasibility": 1.0
+      },
+      "phase_4c_fea": {
+        "design_rank": 8,
+        "voxel_count": 96,
+        "load_case": "STATIC_GRIP",
+        "max_stress_mpa": 36.0,
+        "peak_strain": 0.0112,
+        "max_deformation_mm": 0.05,
+        "material_utilization": 0.32,
+        "support_effectiveness": 0.853,
+        "passes_all_checks": false,
+        "simulation_time_s": 0.0
+      },
+      "phase_4c_stl": {
+        "vertices": 381,
+        "volume_mm3": 129.24,
+        "filename": "orthosis_rank_08.stl"
+      },
+      "clinical_recommendation": "High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]"
+    },
+    {
+      "rank_in_pareto": 4,
+      "composite_score": 0.7572,
+      "phase_4b_metrics": {
+        "support_quality": 0.8743,
+        "movement_preservation": 0.4986,
+        "material_efficiency": 0.7575,
+        "fabrication_feasibility": 1.0
+      },
+      "phase_4c_fea": {
+        "design_rank": 4,
+        "voxel_count": 97,
+        "load_case": "STATIC_GRIP",
+        "max_stress_mpa": 36.0,
+        "peak_strain": 0.0112,
+        "max_deformation_mm": 0.05,
+        "material_utilization": 0.323,
+        "support_effectiveness": 0.856,
+        "passes_all_checks": false,
+        "simulation_time_s": 0.0
+      },
+      "phase_4c_stl": {
+        "vertices": 391,
+        "volume_mm3": 199.29,
+        "filename": "orthosis_rank_04.stl"
+      },
+      "clinical_recommendation": "High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]"
+    },
+    {
+      "rank_in_pareto": 9,
+      "composite_score": 0.7556,
+      "phase_4b_metrics": {
+        "support_quality": 0.8688,
+        "movement_preservation": 0.4974,
+        "material_efficiency": 0.76,
+        "fabrication_feasibility": 1.0
+      },
+      "phase_4c_fea": {
+        "design_rank": 9,
+        "voxel_count": 96,
+        "load_case": "STATIC_GRIP",
+        "max_stress_mpa": 36.0,
+        "peak_strain": 0.0112,
+        "max_deformation_mm": 0.05,
+        "material_utilization": 0.32,
+        "support_effectiveness": 0.853,
+        "passes_all_checks": false,
+        "simulation_time_s": 0.0
+      },
+      "phase_4c_stl": {
+        "vertices": 368,
+        "volume_mm3": 415.82,
+        "filename": "orthosis_rank_09.stl"
+      },
+      "clinical_recommendation": "High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]"
+    }
+  ]
+}

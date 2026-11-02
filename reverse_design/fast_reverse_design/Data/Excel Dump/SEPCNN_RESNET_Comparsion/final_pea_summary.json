@@ -1,0 +1,69 @@
+{
+  "sep_final_chromosome": [
+    [
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0
+    ],
+    [
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ]
+  ],
+  "res_final_chromosome": [
+    [
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ]
+  ],
+  "hamming_distance": 3,
+  "percent_genes_different": 15.0,
+  "sep_final_mse": 0.0034106617562482595,
+  "res_final_mse": 0.00011636296067893198,
+  "sep_final_mae": 0.027660558539127682,
+  "res_final_mae": 0.005342979537876048,
+  "sep_final_max_abs_error": 0.14250800738144684,
+  "res_final_max_abs_error": 0.039483067383331294,
+  "pred_shape_mse": 0.003322667209431529,
+  "pred_shape_mae": 0.027554765343666077,
+  "pred_shape_max_abs_diff": 0.13887184858322144,
+  "sep_runtime_mean": 10.54349627494812,
+  "res_runtime_mean": 19.842888641357423,
+  "sep_runtime_std": 1.9076778799283505,
+  "res_runtime_std": 2.2431596096268134
+}

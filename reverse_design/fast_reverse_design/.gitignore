@@ -1,0 +1,13 @@
+*.pyc
+*.pyd
+*.pyi
+/.venv
+*.tex
+*.pdf
+__pycache__/
+.pytest_cache/
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+pipeline/models/*.task

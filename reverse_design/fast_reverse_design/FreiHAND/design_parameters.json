@@ -1,0 +1,41 @@
+{
+  "weight_budget_grams": 80,
+  "max_material_voxels": 10000,
+  "material_density_g_cm3": 1.2,
+  "padding_mm": 4,
+  "voxel_resolution_mm": 2.0,
+  "hand_dimensions": {
+    "x_span": 0.202902190387249,
+    "y_span": 0.19124427437782288,
+    "z_span": 0.6671383082866669
+  },
+  "grid_dimensions": {
+    "x_voxels": 105,
+    "y_voxels": 99,
+    "z_voxels": 337,
+    "total_grid_voxels": 3503115
+  },
+  "material_efficiency": {
+    "total_grid_voxels": 3503115,
+    "max_material_voxels": 10000,
+    "utilization_percent": 0.2854602261130451
+  },
+  "support_priorities": {
+    "wrist": 0.95,
+    "thumb": 0.85,
+    "index": 0.8,
+    "middle": 0.8,
+    "ring": 0.75,
+    "pinky": 0.75,
+    "palm": 0.7
+  },
+  "movement_restrictions": {
+    "wrist": 0.3,
+    "thumb": 0.5,
+    "index": 0.6,
+    "middle": 0.6,
+    "ring": 0.6,
+    "pinky": 0.5,
+    "palm": 0.2
+  }
+}

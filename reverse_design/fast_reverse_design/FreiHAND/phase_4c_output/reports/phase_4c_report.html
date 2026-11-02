@@ -1,0 +1,460 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Phase 4C: Orthosis Design Validation & Comparison Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                h1 { color: #1f4788; border-bottom: 3px solid #1f4788; padding-bottom: 10px; }
+                h2 { color: #2c5aa0; margin-top: 30px; }
+                h3 { color: #5a85c0; }
+                table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+                th { background-color: #1f4788; color: white; padding: 12px; text-align: left; }
+                td { border: 1px solid #ddd; padding: 10px; }
+                tr:nth-child(even) { background-color: #f2f2f2; }
+                .pass { background-color: #d4edda; color: #155724; font-weight: bold; }
+                .fail { background-color: #f8d7da; color: #721c24; font-weight: bold; }
+                .metric { color: #0066cc; font-weight: bold; }
+                .section { margin-bottom: 40px; }
+                .box { border-left: 4px solid #1f4788; padding: 15px; background-color: #f0f4f8; margin: 15px 0; }
+            </style>
+        </head>
+        <body>
+            <h1>Phase 4C: Orthosis Design Validation & Comparison Report</h1>
+        
+<div class='section'>
+<h2>Executive Summary</h2>
+
+            <div class='box'>
+                <h3>Top Recommendation: Design Rank 1</h3>
+                <p><strong>Composite Score:</strong> <span class='metric'>0.787</span></p>
+                <p><strong>Clinical Use:</strong> High support (therapeutic/intensive) | Moderate mobility (functional support) | Ultra-lightweight (minimal print time) | FAILS one or more FEA checks [REVIEW]</p>
+                <p><strong>Key Features:</strong></p>
+                <ul>
+                    <li>Support Quality: 86.3%</li>
+                    <li>Movement Preservation: 49.8%</li>
+                    <li>Material Efficiency: 92.5%</li>
+                    <li>Weight: 0.29g</li>
+                </ul>
+            </div>
+            
+
+            <p><strong>Total Designs Analyzed:</strong> <span class='metric'>10</span></p>
+            <p><strong>Analysis Completed:</strong> Phase 4B (Inverse Design) + Phase 4C (FEA Validation + STL Export)</p>
+        
+</div>
+<div class='section'>
+<h2>Design Comparison Matrix</h2>
+
+        <table>
+            <tr>
+                <th>Rank</th>
+                <th>Composite<br>Score</th>
+                <th>Support<br>Quality</th>
+                <th>Movement<br>Preservation</th>
+                <th>Material<br>Efficiency</th>
+                <th>Fabrication<br>Feasibility</th>
+                <th>Voxel<br>Count</th>
+                <th>Weight<br>(g)</th>
+                <th>FEA<br>Status</th>
+                <th>Recommendation</th>
+            </tr>
+        
+
+            <tr>
+                <td>1</td>
+                <td class='metric'>0.787</td>
+                <td>86.3%</td>
+                <td>49.8%</td>
+                <td>92.5%</td>
+                <td>100.0%</td>
+                <td>30</td>
+                <td>0.29</td>
+                <td class='fail'>FAIL</td>
+                <td style='font-size: 0.9em;'>High support (therapeutic/intensive) | Moderate mobility (fu...</td>
+            </tr>
+            
+
+            <tr>
+                <td>3</td>
+                <td class='metric'>0.771</td>
+                <td>86.8%</td>
+                <td>50.3%</td>
+                <td>83.2%</td>
+                <td>100.0%</td>
+                <td>67</td>
+                <td>0.64</td>
+                <td class='fail'>FAIL</td>
+                <td style='font-size: 0.9em;'>High support (therapeutic/intensive) | Moderate mobility (fu...</td>
+            </tr>
+            
+
+            <tr>
+                <td>10</td>
+                <td class='metric'>0.768</td>
+                <td>89.1%</td>
+                <td>48.9%</td>
+                <td>79.0%</td>
+                <td>100.0%</td>
+                <td>84</td>
+                <td>0.81</td>
+                <td class='fail'>FAIL</td>
+                <td style='font-size: 0.9em;'>High support (therapeutic/intensive) | Moderate mobility (fu...</td>
+            </tr>
+            
+
+            <tr>
+                <td>6</td>
+                <td class='metric'>0.766</td>
+                <td>87.5%</td>
+                <td>49.6%</td>
+                <td>80.0%</td>
+                <td>100.0%</td>
+                <td>80</td>
+                <td>0.77</td>
+                <td class='fail'>FAIL</td>
+                <td style='font-size: 0.9em;'>High support (therapeutic/intensive) | Moderate mobility (fu...</td>
+            </tr>
+            
+
+            <tr>
+                <td>7</td>
+                <td class='metric'>0.766</td>
+                <td>86.6%</td>
+                <td>51.5%</td>
+                <td>79.8%</td>
+                <td>100.0%</td>
+                <td>81</td>
+                <td>0.78</td>
+                <td class='fail'>FAIL</td>
+                <td style='font-size: 0.9em;'>High support (therapeutic/intensive) | Moderate mobility (fu...</td>
+            </tr>
+            
+
+            <tr>
+                <td>2</td>
+                <td class='metric'>0.765</td>
+                <td>86.6%</td>
+                <td>51.6%</td>
+                <td>79.2%</td>
+                <td>100.0%</td>
+                <td>83</td>
+                <td>0.80</td>
+                <td class='fail'>FAIL</td>
+                <td style='font-size: 0.9em;'>High support (therapeutic/intensive) | Moderate mobility (fu...</td>
+            </tr>
+            
+
+            <tr>
+                <td>5</td>
+                <td class='metric'>0.763</td>
+                <td>85.3%</td>
+                <td>50.7%</td>
+                <td>81.8%</td>
+                <td>100.0%</td>
+                <td>73</td>
+                <td>0.70</td>
+                <td class='fail'>FAIL</td>
+                <td style='font-size: 0.9em;'>High support (therapeutic/intensive) | Moderate mobility (fu...</td>
+            </tr>
+            
+
+            <tr>
+                <td>8</td>
+                <td class='metric'>0.758</td>
+                <td>86.8%</td>
+                <td>51.3%</td>
+                <td>76.0%</td>
+                <td>100.0%</td>
+                <td>96</td>
+                <td>0.92</td>
+                <td class='fail'>FAIL</td>
+                <td style='font-size: 0.9em;'>High support (therapeutic/intensive) | Moderate mobility (fu...</td>
+            </tr>
+            
+
+            <tr>
+                <td>4</td>
+                <td class='metric'>0.757</td>
+                <td>87.4%</td>
+                <td>49.9%</td>
+                <td>75.8%</td>
+                <td>100.0%</td>
+                <td>97</td>
+                <td>0.93</td>
+                <td class='fail'>FAIL</td>
+                <td style='font-size: 0.9em;'>High support (therapeutic/intensive) | Moderate mobility (fu...</td>
+            </tr>
+            
+
+            <tr>
+                <td>9</td>
+                <td class='metric'>0.756</td>
+                <td>86.9%</td>
+                <td>49.7%</td>
+                <td>76.0%</td>
+                <td>100.0%</td>
+                <td>96</td>
+                <td>0.92</td>
+                <td class='fail'>FAIL</td>
+                <td style='font-size: 0.9em;'>High support (therapeutic/intensive) | Moderate mobility (fu...</td>
+            </tr>
+            
+</table>
+</div>
+<div class='section'>
+<h2>FEA Validation Results</h2>
+
+            <table>
+                <tr>
+                    <th>Rank</th>
+                    <th>Max Stress<br>(MPa)</th>
+                    <th>Peak Strain</th>
+                    <th>Max Deflection<br>(mm)</th>
+                    <th>Support<br>Effectiveness</th>
+                    <th>Overall<br>Pass</th>
+                </tr>
+            
+
+                <tr>
+                    <td>1</td>
+                    <td>36.00</td>
+                    <td>0.0112</td>
+                    <td>0.04</td>
+                    <td>0.451</td>
+                    <td class='fail'>FAIL</td>
+                </tr>
+                
+
+                <tr>
+                    <td>3</td>
+                    <td>36.00</td>
+                    <td>0.0112</td>
+                    <td>0.04</td>
+                    <td>0.738</td>
+                    <td class='fail'>FAIL</td>
+                </tr>
+                
+
+                <tr>
+                    <td>10</td>
+                    <td>36.00</td>
+                    <td>0.0112</td>
+                    <td>0.05</td>
+                    <td>0.814</td>
+                    <td class='fail'>FAIL</td>
+                </tr>
+                
+
+                <tr>
+                    <td>6</td>
+                    <td>36.00</td>
+                    <td>0.0112</td>
+                    <td>0.04</td>
+                    <td>0.798</td>
+                    <td class='fail'>FAIL</td>
+                </tr>
+                
+
+                <tr>
+                    <td>7</td>
+                    <td>36.00</td>
+                    <td>0.0112</td>
+                    <td>0.05</td>
+                    <td>0.802</td>
+                    <td class='fail'>FAIL</td>
+                </tr>
+                
+
+                <tr>
+                    <td>2</td>
+                    <td>36.00</td>
+                    <td>0.0112</td>
+                    <td>0.05</td>
+                    <td>0.810</td>
+                    <td class='fail'>FAIL</td>
+                </tr>
+                
+
+                <tr>
+                    <td>5</td>
+                    <td>36.00</td>
+                    <td>0.0112</td>
+                    <td>0.04</td>
+                    <td>0.768</td>
+                    <td class='fail'>FAIL</td>
+                </tr>
+                
+
+                <tr>
+                    <td>8</td>
+                    <td>36.00</td>
+                    <td>0.0112</td>
+                    <td>0.05</td>
+                    <td>0.853</td>
+                    <td class='fail'>FAIL</td>
+                </tr>
+                
+
+                <tr>
+                    <td>4</td>
+                    <td>36.00</td>
+                    <td>0.0112</td>
+                    <td>0.05</td>
+                    <td>0.856</td>
+                    <td class='fail'>FAIL</td>
+                </tr>
+                
+
+                <tr>
+                    <td>9</td>
+                    <td>36.00</td>
+                    <td>0.0112</td>
+                    <td>0.05</td>
+                    <td>0.853</td>
+                    <td class='fail'>FAIL</td>
+                </tr>
+                
+</table>
+</div>
+<div class='section'>
+<h2>Fabrication Specifications (STL Export)</h2>
+
+            <table>
+                <tr>
+                    <th>Rank</th>
+                    <th>STL File</th>
+                    <th>Vertices</th>
+                    <th>Volume<br>(mm3)</th>
+                    <th>Est. Weight<br>(g @ 1.2 g/cm3)</th>
+                    <th>Est. Print Time<br>(min)</th>
+                </tr>
+            
+
+                <tr>
+                    <td>1</td>
+                    <td>orthosis_rank_01.stl</td>
+                    <td>88</td>
+                    <td>48.4</td>
+                    <td>0.06</td>
+                    <td>5</td>
+                </tr>
+                
+
+                <tr>
+                    <td>3</td>
+                    <td>orthosis_rank_03.stl</td>
+                    <td>313</td>
+                    <td>343.4</td>
+                    <td>0.41</td>
+                    <td>5</td>
+                </tr>
+                
+
+                <tr>
+                    <td>10</td>
+                    <td>orthosis_rank_10.stl</td>
+                    <td>375</td>
+                    <td>155.3</td>
+                    <td>0.19</td>
+                    <td>5</td>
+                </tr>
+                
+
+                <tr>
+                    <td>6</td>
+                    <td>orthosis_rank_06.stl</td>
+                    <td>363</td>
+                    <td>251.8</td>
+                    <td>0.30</td>
+                    <td>5</td>
+                </tr>
+                
+
+                <tr>
+                    <td>7</td>
+                    <td>orthosis_rank_07.stl</td>
+                    <td>342</td>
+                    <td>32.3</td>
+                    <td>0.04</td>
+                    <td>5</td>
+                </tr>
+                
+
+                <tr>
+                    <td>2</td>
+                    <td>orthosis_rank_02.stl</td>
+                    <td>356</td>
+                    <td>65.4</td>
+                    <td>0.08</td>
+                    <td>5</td>
+                </tr>
+                
+
+                <tr>
+                    <td>5</td>
+                    <td>orthosis_rank_05.stl</td>
+                    <td>349</td>
+                    <td>135.4</td>
+                    <td>0.16</td>
+                    <td>5</td>
+                </tr>
+                
+
+                <tr>
+                    <td>8</td>
+                    <td>orthosis_rank_08.stl</td>
+                    <td>381</td>
+                    <td>129.2</td>
+                    <td>0.16</td>
+                    <td>5</td>
+                </tr>
+                
+
+                <tr>
+                    <td>4</td>
+                    <td>orthosis_rank_04.stl</td>
+                    <td>391</td>
+                    <td>199.3</td>
+                    <td>0.24</td>
+                    <td>5</td>
+                </tr>
+                
+
+                <tr>
+                    <td>9</td>
+                    <td>orthosis_rank_09.stl</td>
+                    <td>368</td>
+                    <td>415.8</td>
+                    <td>0.50</td>
+                    <td>5</td>
+                </tr>
+                
+</table>
+</div>
+<div class='section'>
+<h2>Clinical Recommendations by Use Case</h2>
+
+        <h3>For Maximum Support (Therapeutic Orthosis)</h3>
+        <p>Choose designs with high support quality (>0.85) and passing FEA validation.</p>
+        
+<p>- Design Rank 1: High support (therapeutic/intensive) | Moderate mobility (functional support) | Ultra-lightweight (minimal print time) | FAILS one or more FEA checks [REVIEW]</p>
+<p>- Design Rank 3: High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]</p>
+<p>- Design Rank 10: High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]</p>
+
+        <h3>For Lightweight Comfort (Daily Wear)</h3>
+        <p>Choose designs with high material efficiency (>0.90) and good movement preservation (>0.50).</p>
+        
+
+        <h3>For Dynamic Therapy (Intensive Rehabilitation)</h3>
+        <p>Choose designs with balanced support and high movement preservation (0.45-0.60).</p>
+        
+<p>- Design Rank 1: High support (therapeutic/intensive) | Moderate mobility (functional support) | Ultra-lightweight (minimal print time) | FAILS one or more FEA checks [REVIEW]</p>
+<p>- Design Rank 3: High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]</p>
+<p>- Design Rank 10: High support (therapeutic/intensive) | Moderate mobility (functional support) | Lightweight (efficient fabrication) | FAILS one or more FEA checks [REVIEW]</p>
+</div>
+
+        </body>
+        </html>
+        
