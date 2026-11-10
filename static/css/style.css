@@ -30,6 +30,9 @@ header {
 }
 
 h1 { margin: 0 0 6px; font-size: 1.4rem; }
+.tabs { display: flex; gap: 8px; margin-top: 12px; }
+.tab-button { background: #394655; color: var(--text); }
+.tab-button.active { background: var(--accent); color: #061018; }
 
 .disclaimer {
   margin: 0;
@@ -71,6 +74,7 @@ summary { cursor: pointer; color: #c5d5e5; margin-bottom: 10px; }
 .confidence { margin: 0 0 4px; color: var(--muted); font-size: 0.75rem; }
 .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .secondary { background: #394655; color: var(--text); }
+.danger { background: #b94750; color: #fff; }
 button:disabled { opacity: 0.55; cursor: wait; }
 
 label {
@@ -125,6 +129,18 @@ button, .btn {
   display: block;
 }
 
+.zoom-controls {
+  position: absolute;
+  z-index: 2;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.zoom-controls button { min-width: 40px; padding: 6px 10px; font-size: 1.1rem; }
+
 .toggles {
   position: absolute;
   z-index: 2;
@@ -147,6 +163,22 @@ button, .btn {
 .component-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .component-link { font-size: 0.72rem !important; padding: 5px 7px !important; }
 .mesh-summary { position: absolute; bottom: 48px; left: 12px; color: var(--muted); font-size: 0.82rem; background: rgba(17,20,24,.82); padding: 6px 8px; border-radius: 6px; }
+.comparison-panel { grid-column: 1 / -1; padding: 20px 24px 32px; }
+.comparison-panel > .hint { max-width: 900px; margin: 8px 0 14px; }
+.comparison-jobs { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
+.comparison-job { min-width: 0; padding: 12px; border: 1px solid #334; border-radius: 8px; background: var(--panel); }
+.comparison-job header { display: flex; align-items: flex-start; gap: 8px; padding: 0; }
+.comparison-job input[type="checkbox"] { width: auto; margin: 3px 0 0; }
+.comparison-job h3 { margin: 0; overflow-wrap: anywhere; }
+.comparison-job p { margin: 6px 0; color: var(--muted); font-size: 0.8rem; }
+.comparison-photos { display: flex; gap: 8px; margin: 8px 0; }
+.comparison-photos a { flex: 1; min-width: 0; color: #c5d5e5; font-size: 0.78rem; }
+.comparison-photos img { display: block; width: 100%; max-height: 150px; object-fit: contain; background: #10151a; border-radius: 4px; }
+.comparison-job .btn { font-size: 0.78rem; }
+.comparison-results { margin-top: 20px; }
+.comparison-results h3 { margin: 14px 0 8px; }
+.comparison-results ul { padding-left: 20px; line-height: 1.6; }
+.comparison-note { color: var(--warn); }
 
 .spinner {
   position: absolute;
@@ -171,4 +203,5 @@ button, .btn {
   .panel { max-height: none; }
   #viewport { height: 60vh; }
   .photo-review-grid { grid-template-columns: 1fr; }
+  .comparison-panel { padding: 16px; }
 }

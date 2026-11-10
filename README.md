@@ -11,9 +11,15 @@ A Flask demonstration app that accepts dorsal and palmar hand photos, detects an
 - Set hand length and optional palm, wrist, hand-thickness, plate, and finger-circumference measurements.
 - Preview the estimated hand and orthosis, with labeled landmarks.
 - Export the assembled orthosis as STL, individual STL components, a ZIP of parts, and a PLY hand preview.
+- Save generated jobs with their uploaded hand photos and optionally supplied independent measurements.
+- Compare selected saved jobs in the website's **Compare saved jobs** tab. The current comparison measures STL inner MCP ring circumferences against separately recorded reference measurements and reports per-finger MAE, RMSE, and signed bias.
 - Retain the legacy single-photo `/upload` workflow.
 
 The STL is mesh geometry (millimetres for slicers), not editable parametric CAD. The rings are closed, and the thumb support is connected to the palm plate. Inspect dimensions and fit in a slicer before any prototype print.
+
+Comparison measurements must be collected independently of the generated STL and entered in the optional reference-measurement section. The reference values are stored separately from design inputs. Older jobs without references remain visible but are excluded from comparison statistics. A geometric comparison does not establish clinical fit, comfort, safety, or effectiveness.
+
+[FreiHAND](https://lmb.informatik.uni-freiburg.de/resources/datasets/FreihandDataset.en.html) provides single RGB images and 3D hand annotations, but not paired dorsal/palm photos or direct finger circumference references for this application's two-view ring workflow. It should not be used as ring-fit ground truth without a separate, validated method to derive and verify those measurements. Its research-only terms prohibit commercial use; consult the official dataset page before downloading or using it.
 
 ## Windows setup
 

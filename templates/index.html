@@ -21,9 +21,13 @@
       <p class="disclaimer">
         Research prototype. Two photos produce an estimated mesh, not a scan or fitted medical device.
       </p>
+      <nav class="tabs" aria-label="Main navigation">
+        <button type="button" class="tab-button active" data-tab="generate-tab" aria-selected="true">Generate</button>
+        <button type="button" class="tab-button" data-tab="compare-tab" aria-selected="false">Compare saved jobs</button>
+      </nav>
     </header>
 
-    <section class="panel">
+    <section class="panel" id="generate-panel" data-tab-panel="generate-tab">
       <form id="upload-form">
         <h2>1. Add matching hand views</h2>
         <p class="hint">Use the same open, relaxed pose in both photos. Keep the full hand and wrist in frame.</p>
@@ -68,6 +72,41 @@
             <label>Pinky<input type="number" name="finger_pinky_circumference_mm" min="15" max="100" step="0.5" placeholder="Estimate" /></label>
           </div>
           <label class="checkbox"><input type="checkbox" name="include_thumb" checked /> Include thumb support</label>
+
+          <h3>Component Size Adjustments</h3>
+          <p class="hint">Use sliders to adjust component sizes in real-time</p>
+          <div class="parameter-grid">
+            <label>
+              Overhang Size: <span id="overhang-value">1.0</span>x
+              <input type="range" name="overhang_size_multiplier" min="0.5" max="2.0" step="0.1" value="1.0" class="slider" />
+            </label>
+            <label>
+              Connector Width: <span id="connector-width-value">1.0</span>x
+              <input type="range" name="connector_width_multiplier" min="0.5" max="2.0" step="0.1" value="1.0" class="slider" />
+            </label>
+            <label>
+              Connector Height: <span id="connector-height-value">1.0</span>x
+              <input type="range" name="connector_height_multiplier" min="0.5" max="2.0" step="0.1" value="1.0" class="slider" />
+            </label>
+          </div>
+        </details>
+        <details>
+          <summary>Independent reference measurements (optional)</summary>
+          <p class="hint">
+            These values are kept separate from ring sizing inputs. Enter measurements taken independently,
+            at the MCP ring location; they are used only for comparison and must not be copied from the STL.
+          </p>
+          <label>
+            Measurement source
+            <input type="text" name="reference_source" maxlength="200" placeholder="e.g. caliper measurement, scan ID, dataset and sample" />
+          </label>
+          <div class="parameter-grid five-cols">
+            <label>Thumb MCP circumference (mm)<input type="number" name="reference_thumb_mcp_circumference_mm" min="15" max="100" step="0.1" /></label>
+            <label>Index MCP circumference (mm)<input type="number" name="reference_index_mcp_circumference_mm" min="15" max="100" step="0.1" /></label>
+            <label>Middle MCP circumference (mm)<input type="number" name="reference_middle_mcp_circumference_mm" min="15" max="100" step="0.1" /></label>
+            <label>Ring MCP circumference (mm)<input type="number" name="reference_ring_mcp_circumference_mm" min="15" max="100" step="0.1" /></label>
+            <label>Pinky MCP circumference (mm)<input type="number" name="reference_pinky_mcp_circumference_mm" min="15" max="100" step="0.1" /></label>
+          </div>
         </details>
         <button type="submit" id="analyze-button">Analyze photos</button>
       </form>
@@ -97,7 +136,7 @@
       <p id="status" class="status" role="status" aria-live="polite"></p>
     </section>
 
-    <section class="viewer-wrap">
+    <section class="viewer-wrap" data-tab-panel="generate-tab">
       <div class="toggles">
         <label><input type="checkbox" id="toggle-hand" checked /> Estimated hand</label>
         <label><input type="checkbox" id="toggle-orthosis" checked /> Orthosis</label>
@@ -105,10 +144,33 @@
         <a id="dl-hand" class="btn disabled" href="#" download="hand_preview.ply">Download hand PLY</a>
         <a id="dl-orthosis" class="btn disabled" href="#" download="orthosis.stl">Download assembled STL</a>
       </div>
+      <div class="zoom-controls" role="group" aria-label="Zoom">
+        <button type="button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+        <button type="button" id="zoom-out" title="Zoom out" aria-label="Zoom out">&minus;</button>
+        <button type="button" id="zoom-reset" title="Reset view" aria-label="Reset view">Reset</button>
+      </div>
       <div id="spinner" class="spinner hidden" aria-hidden="true"></div>
       <canvas id="viewport"></canvas>
       <div id="part-downloads" class="part-downloads"></div>
       <p id="mesh-summary" class="mesh-summary"></p>
+    </section>
+
+    <section id="compare-tab" class="comparison-panel hidden" data-tab-panel="compare-tab">
+      <h2>Compare generated orthoses</h2>
+      <p class="hint">
+        Select saved jobs to compare each STL's inner MCP ring circumference with the independent
+        measurement recorded for that job. Jobs without reference values are shown but excluded from
+        statistics. Geometric agreement is not clinical fit or safety validation.
+      </p>
+      <div class="button-row">
+        <button type="button" id="refresh-jobs">Refresh jobs</button>
+        <button type="button" id="select-all-jobs" class="secondary">Select all jobs</button>
+        <button type="button" id="compare-selected">Compare selected</button>
+        <button type="button" id="delete-all-jobs" class="danger">Delete all jobs</button>
+      </div>
+      <p id="comparison-status" class="status" role="status" aria-live="polite"></p>
+      <div id="comparison-jobs" class="comparison-jobs"></div>
+      <div id="comparison-results" class="comparison-results" aria-live="polite"></div>
     </section>
   </main>
   <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
