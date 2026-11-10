@@ -147,6 +147,8 @@ def test_generate_route_returns_assembled_and_part_urls(client, tmp_path, monkey
             "hand_length_cm": "18",
             "corrections": json.dumps({"dorsal_points": points, "palmar_points": points}),
             "finger_index_circumference_mm": "52",
+            "reference_index_mcp_circumference_mm": "52",
+            "reference_source": "test caliper measurement",
         },
     )
     assert response.status_code == 200, response.get_json()
@@ -156,3 +158,139 @@ def test_generate_route_returns_assembled_and_part_urls(client, tmp_path, monkey
     assert payload["part_urls"]
     bridge_url = next(url for url in payload["part_urls"] if url.endswith("/thumb_palm_bridge.stl"))
     assert client.get(bridge_url).status_code == 200
+    job_record = json.loads((outputs / job_id / "job.json").read_text(encoding="utf-8"))
+    assert job_record["reference_measurements_mm"] == {"index": 52.0}
+    assert job_record["reference_source"] == "test caliper measurement"
+
+    listed = client.get("/api/comparison/jobs")
+    assert listed.status_code == 200
+    job = next(item for item in listed.get_json()["jobs"] if item["job_id"] == job_id)
+    assert job["eligible"]
+    assert len(job["photos"]) == 2
+
+    compared = client.post(
+        "/api/comparison/compare",
+        json={"job_ids": [job_id]},
+    )
+    assert compared.status_code == 200, compared.get_json()
+    comparison = compared.get_json()
+    assert comparison["eligible_job_count"] == 1
+    assert comparison["statistics"]["index"]["count"] == 1
+    measurement = comparison["results"][0]["measurements"][0]
+    assert measurement["reference_circumference_mm"] == 52
+    assert measurement["stl_inner_circumference_mm"] > 52
+    assert measurement["reference_also_used_for_sizing"]
+
+
+def test_comparison_rejects_invalid_job_id(client) -> None:
+    response = client.post("/api/comparison/compare", json={"job_ids": ["../outside"]})
+    assert response.status_code == 400
+    assert "Invalid processing job" in response.get_json()["error"]
+
+
+def test_comparison_reports_legacy_jobs_without_references(client, tmp_path, monkeypatch) -> None:
+    import app as flask_app
+
+    job_id = "b" * 32
+    outputs = tmp_path / "outputs"
+    job_folder = outputs / job_id
+    job_folder.mkdir(parents=True)
+    (job_folder / "orthosis.stl").write_bytes(b"legacy mesh")
+    monkeypatch.setattr(flask_app, "OUTPUT_DIR", outputs)
+    monkeypatch.setattr(flask_app, "UPLOAD_DIR", tmp_path / "uploads")
+
+    listed = client.get("/api/comparison/jobs")
+    assert listed.status_code == 200
+    job = listed.get_json()["jobs"][0]
+    assert not job["eligible"]
+
+    compared = client.post("/api/comparison/compare", json={"job_ids": [job_id]})
+    assert compared.status_code == 200
+    result = compared.get_json()["results"][0]
+    assert not result["eligible"]
+    assert "No independent reference" in result["reason"]
+
+
+def test_generation_requires_a_source_for_reference_measurements(
+    client, tmp_path, monkeypatch
+) -> None:
+    import app as flask_app
+
+    job_id = "c" * 32
+    upload_folder = tmp_path / "uploads" / job_id
+    upload_folder.mkdir(parents=True)
+    (upload_folder / "dorsal.png").write_bytes(b"placeholder")
+    (upload_folder / "palmar.png").write_bytes(b"placeholder")
+    monkeypatch.setattr(flask_app, "UPLOAD_DIR", tmp_path / "uploads")
+    monkeypatch.setattr(flask_app, "OUTPUT_DIR", tmp_path / "outputs")
+
+    response = client.post(
+        "/generate",
+        data={
+            "job_id": job_id,
+            "reference_index_mcp_circumference_mm": "52",
+        },
+    )
+    assert response.status_code == 400
+    assert "measurement source" in response.get_json()["error"]
+
+
+def test_delete_saved_job_removes_only_its_outputs_and_photos(
+    client, tmp_path, monkeypatch
+) -> None:
+    import app as flask_app
+
+    job_id = "d" * 32
+    other_id = "e" * 32
+    outputs = tmp_path / "outputs"
+    uploads = tmp_path / "uploads"
+    for current_id in (job_id, other_id):
+        (outputs / current_id).mkdir(parents=True)
+        (outputs / current_id / "orthosis.stl").write_bytes(b"stl")
+        (uploads / current_id).mkdir(parents=True)
+        (uploads / current_id / "dorsal.png").write_bytes(b"photo")
+    (outputs / "unrelated.txt").write_text("keep", encoding="utf-8")
+    monkeypatch.setattr(flask_app, "OUTPUT_DIR", outputs)
+    monkeypatch.setattr(flask_app, "UPLOAD_DIR", uploads)
+
+    response = client.delete("/api/comparison/jobs/%s" % job_id)
+
+    assert response.status_code == 200
+    assert response.get_json()["deleted"] == [job_id]
+    assert not (outputs / job_id).exists()
+    assert not (uploads / job_id).exists()
+    assert (outputs / other_id / "orthosis.stl").is_file()
+    assert (uploads / other_id / "dorsal.png").is_file()
+    assert (outputs / "unrelated.txt").is_file()
+
+
+def test_delete_all_removes_only_saved_orthosis_jobs(client, tmp_path, monkeypatch) -> None:
+    import app as flask_app
+
+    outputs = tmp_path / "outputs"
+    uploads = tmp_path / "uploads"
+    job_ids = ("f" * 32, "1" * 32)
+    for job_id in job_ids:
+        (outputs / job_id).mkdir(parents=True)
+        (outputs / job_id / "orthosis.stl").write_bytes(b"stl")
+        (uploads / job_id).mkdir(parents=True)
+        (uploads / job_id / "palmar.png").write_bytes(b"photo")
+    ignored_id = "2" * 32
+    (outputs / ignored_id).mkdir(parents=True)
+    (outputs / ignored_id / "splint.stl").write_bytes(b"legacy splint")
+    monkeypatch.setattr(flask_app, "OUTPUT_DIR", outputs)
+    monkeypatch.setattr(flask_app, "UPLOAD_DIR", uploads)
+
+    response = client.delete("/api/comparison/jobs")
+
+    assert response.status_code == 200
+    assert set(response.get_json()["deleted"]) == set(job_ids)
+    for job_id in job_ids:
+        assert not (outputs / job_id).exists()
+        assert not (uploads / job_id).exists()
+    assert (outputs / ignored_id / "splint.stl").is_file()
+
+
+def test_delete_route_rejects_unknown_job(client) -> None:
+    response = client.delete("/api/comparison/jobs/not-a-job")
+    assert response.status_code == 404

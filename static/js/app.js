@@ -10,6 +10,9 @@ const spinner = document.getElementById("spinner");
 const canvas = document.getElementById("viewport");
 const partDownloads = document.getElementById("part-downloads");
 const meshSummary = document.getElementById("mesh-summary");
+const comparisonJobs = document.getElementById("comparison-jobs");
+const comparisonResults = document.getElementById("comparison-results");
+const comparisonStatus = document.getElementById("comparison-status");
 const views = {};
 let currentJob = null;
 let submittedMeasurements = null;
@@ -22,11 +25,12 @@ const camera = new THREE.PerspectiveCamera(45, 1, 0.001, 10);
 camera.position.set(0.12, 0.08, 0.28);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
+controls.zoomToCursor = true;
+controls.zoomSpeed = 1.5;
 scene.add(new THREE.AmbientLight(0xffffff, 0.7));
 const keyLight = new THREE.DirectionalLight(0xffffff, 0.85);
 keyLight.position.set(0.4, 0.6, 0.5);
 scene.add(keyLight);
-scene.add(new THREE.GridHelper(0.4, 8, 0x334155, 0x1e293b));
 
 const modelGroup = new THREE.Group();
 scene.add(modelGroup);
@@ -80,6 +84,209 @@ async function readResponse(response) {
   }
   return payload;
 }
+
+document.querySelectorAll(".tab-button").forEach((button) => {
+  button.addEventListener("click", () => {
+    const activeTab = button.dataset.tab;
+    document.querySelectorAll(".tab-button").forEach((tab) => {
+      const active = tab === button;
+      tab.classList.toggle("active", active);
+      tab.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    document.querySelectorAll("[data-tab-panel]").forEach((panel) => {
+      panel.classList.toggle("hidden", panel.dataset.tabPanel !== activeTab);
+    });
+    if (activeTab === "compare-tab") refreshComparisonJobs();
+    resize();
+  });
+});
+
+function comparisonElement(tag, text, className) {
+  const element = document.createElement(tag);
+  if (text !== undefined) element.textContent = text;
+  if (className) element.className = className;
+  return element;
+}
+
+async function refreshComparisonJobs() {
+  comparisonStatus.classList.remove("error");
+  comparisonStatus.textContent = "Loading saved jobs…";
+  comparisonResults.replaceChildren();
+  try {
+    const payload = await readResponse(await fetch("/api/comparison/jobs"));
+    comparisonJobs.replaceChildren();
+    if (!payload.jobs.length) {
+      comparisonJobs.appendChild(comparisonElement("p", "No generated STL jobs are available yet.", "hint"));
+    }
+    payload.jobs.forEach((job) => {
+      const card = comparisonElement("article", undefined, "comparison-job");
+      const heading = comparisonElement("header");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = job.job_id;
+      checkbox.setAttribute("aria-label", `Select job ${job.job_id}`);
+      heading.append(checkbox, comparisonElement("h3", `Job ${job.job_id}`));
+      card.appendChild(heading);
+      card.appendChild(comparisonElement("p", `Generated: ${job.created_at}`));
+      card.appendChild(comparisonElement(
+        "p",
+        job.eligible
+          ? `Reference source: ${job.reference_source}`
+          : "Not comparison-eligible: no independent reference measurements recorded."
+      ));
+      if (job.photos.length) {
+        const photos = comparisonElement("div", undefined, "comparison-photos");
+        job.photos.forEach((photo) => {
+          const link = document.createElement("a");
+          link.href = photo.url;
+          link.target = "_blank";
+          link.rel = "noopener";
+          const image = document.createElement("img");
+          image.src = photo.url;
+          image.alt = `${photo.label} for job ${job.job_id}`;
+          link.append(image, document.createTextNode(photo.label));
+          photos.appendChild(link);
+        });
+        card.appendChild(photos);
+      } else {
+        card.appendChild(comparisonElement("p", "Original hand photos are unavailable."));
+      }
+      const download = comparisonElement("a", "Download assembled STL", "btn");
+      download.href = job.orthosis_url;
+      download.download = "orthosis.stl";
+      card.appendChild(download);
+      const deleteButton = comparisonElement("button", "Delete job", "danger delete-job");
+      deleteButton.type = "button";
+      deleteButton.dataset.jobId = job.job_id;
+      card.appendChild(deleteButton);
+      comparisonJobs.appendChild(card);
+    });
+    comparisonStatus.textContent = `${payload.jobs.length} saved job(s). Select jobs to compare; jobs without reference measurements will be reported as excluded.`;
+  } catch (error) {
+    comparisonStatus.textContent = error.message || String(error);
+    comparisonStatus.classList.add("error");
+  }
+}
+
+function renderComparison(payload) {
+  comparisonResults.replaceChildren();
+  comparisonResults.appendChild(comparisonElement(
+    "p",
+    `Eligible jobs: ${payload.eligible_job_count} of ${payload.results.length}.`,
+    "hint"
+  ));
+  comparisonResults.appendChild(comparisonElement("h3", "Aggregate statistics"));
+  const statistics = Object.entries(payload.statistics);
+  if (!statistics.length) {
+    comparisonResults.appendChild(comparisonElement("p", "No selected jobs had usable independent references and matching ring files.", "hint"));
+  } else {
+    const list = document.createElement("ul");
+    statistics.forEach(([digit, stat]) => {
+      list.appendChild(comparisonElement(
+        "li",
+        `${digit}: n=${stat.count}, MAE ${stat.mae_mm.toFixed(2)} mm, RMSE ${stat.rmse_mm.toFixed(2)} mm, signed bias ${stat.bias_mm.toFixed(2)} mm`
+      ));
+    });
+    comparisonResults.appendChild(list);
+  }
+
+  comparisonResults.appendChild(comparisonElement("h3", "Per-job results"));
+  payload.results.forEach((job) => {
+    const section = comparisonElement("section", undefined, "comparison-job");
+    section.appendChild(comparisonElement("h3", `Job ${job.job_id}`));
+    if (!job.eligible) {
+      section.appendChild(comparisonElement("p", job.reason || "No comparable measurements.", "error"));
+    } else {
+      section.appendChild(comparisonElement("p", `Reference source: ${job.reference_source || "Not recorded"}`));
+      const list = document.createElement("ul");
+      job.measurements.forEach((measurement) => {
+        list.appendChild(comparisonElement(
+          "li",
+          `${measurement.digit} ${measurement.location}: STL inner circumference ${measurement.stl_inner_circumference_mm.toFixed(2)} mm; reference ${measurement.reference_circumference_mm.toFixed(2)} mm; signed difference ${measurement.signed_error_mm.toFixed(2)} mm${measurement.reference_also_used_for_sizing ? " — this same value was used to size the ring, so it checks geometry conversion, not independent prediction accuracy." : ""}`
+        ));
+      });
+      section.appendChild(list);
+      if (job.reason) section.appendChild(comparisonElement("p", `Not compared: ${job.reason}`));
+    }
+    comparisonResults.appendChild(section);
+  });
+  comparisonResults.appendChild(comparisonElement("p", payload.comparison_note, "comparison-note"));
+}
+
+document.getElementById("refresh-jobs").addEventListener("click", refreshComparisonJobs);
+document.getElementById("select-all-jobs").addEventListener("click", () => {
+  comparisonJobs.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+    checkbox.checked = true;
+  });
+});
+comparisonJobs.addEventListener("click", async (event) => {
+  const button = event.target.closest(".delete-job");
+  if (!button) return;
+  const jobId = button.dataset.jobId;
+  if (!window.confirm(`Permanently delete job ${jobId}, its generated files, and its uploaded hand photos?`)) {
+    return;
+  }
+  button.disabled = true;
+  comparisonStatus.classList.remove("error");
+  comparisonStatus.textContent = `Deleting job ${jobId}…`;
+  try {
+    await readResponse(await fetch(`/api/comparison/jobs/${encodeURIComponent(jobId)}`, {
+      method: "DELETE",
+    }));
+    await refreshComparisonJobs();
+    comparisonStatus.textContent = `Deleted job ${jobId} and its uploaded photos.`;
+  } catch (error) {
+    button.disabled = false;
+    comparisonStatus.textContent = error.message || String(error);
+    comparisonStatus.classList.add("error");
+  }
+});
+document.getElementById("delete-all-jobs").addEventListener("click", async () => {
+  const count = comparisonJobs.querySelectorAll(".delete-job").length;
+  if (!count) {
+    comparisonStatus.textContent = "There are no generated jobs to delete.";
+    return;
+  }
+  if (!window.confirm(`Permanently delete all ${count} listed jobs, their generated files, and their uploaded hand photos? This cannot be undone.`)) {
+    return;
+  }
+  comparisonStatus.classList.remove("error");
+  comparisonStatus.textContent = "Deleting saved jobs…";
+  try {
+    const payload = await readResponse(await fetch("/api/comparison/jobs", {
+      method: "DELETE",
+    }));
+    await refreshComparisonJobs();
+    comparisonStatus.textContent = `Deleted ${payload.deleted.length} job(s).`;
+  } catch (error) {
+    comparisonStatus.textContent = error.message || String(error);
+    comparisonStatus.classList.add("error");
+    refreshComparisonJobs();
+  }
+});
+document.getElementById("compare-selected").addEventListener("click", async () => {
+  const jobIds = [...comparisonJobs.querySelectorAll('input[type="checkbox"]:checked')]
+    .map((checkbox) => checkbox.value);
+  if (!jobIds.length) {
+    comparisonStatus.textContent = "Select at least one saved job.";
+    comparisonStatus.classList.add("error");
+    return;
+  }
+  comparisonStatus.classList.remove("error");
+  comparisonStatus.textContent = "Measuring selected STL rings…";
+  try {
+    const payload = await readResponse(await fetch("/api/comparison/compare", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ job_ids: jobIds }),
+    }));
+    renderComparison(payload);
+    comparisonStatus.textContent = "Comparison complete.";
+  } catch (error) {
+    comparisonStatus.textContent = error.message || String(error);
+    comparisonStatus.classList.add("error");
+  }
+});
 
 function markerLabel(name) {
   const labels = {
@@ -264,12 +471,23 @@ function fitCamera() {
   if (bounds.isEmpty()) return;
   const size = bounds.getSize(new THREE.Vector3()).length();
   const center = bounds.getCenter(new THREE.Vector3());
+  controls.minDistance = size * 0.02;
+  controls.maxDistance = size * 10;
   controls.target.copy(center);
   camera.position.copy(center).add(new THREE.Vector3(size * 0.8, size * 0.8, size * 1.8));
   camera.near = Math.max(size / 500, 0.0001);
   camera.far = size * 20;
   camera.updateProjectionMatrix();
 }
+
+function zoomBy(factor) {
+  const offset = camera.position.clone().sub(controls.target);
+  const distance = THREE.MathUtils.clamp(offset.length() * factor, controls.minDistance, controls.maxDistance || Infinity);
+  camera.position.copy(controls.target).add(offset.setLength(distance));
+}
+document.getElementById("zoom-in").addEventListener("click", () => zoomBy(0.8));
+document.getElementById("zoom-out").addEventListener("click", () => zoomBy(1.25));
+document.getElementById("zoom-reset").addEventListener("click", fitCamera);
 
 document.getElementById("generate-button").addEventListener("click", async () => {
   if (!currentJob || !views.dorsal || !views.palmar) {
@@ -364,6 +582,7 @@ document.getElementById("generate-button").addEventListener("click", async () =>
     meshSummary.textContent = report.component_shells_watertight
       ? `Mesh: ${report.vertices} vertices, ${report.faces} triangles. ${report.closed_part_count} individual part shells are closed; assembled STL watertight: ${report.watertight}. Estimated geometry only.`
       : `Mesh: ${report.vertices} vertices, ${report.faces} triangles. Some parts are not closed; review before printing.`;
+    refreshComparisonJobs();
     setBusy(false, "Mesh generated. Review the fit visually; the two photos do not provide a calibrated 3D scan.");
   } catch (error) {
     showError(error.message || String(error));
@@ -410,4 +629,3 @@ sliders.forEach(slider => {
     }
   });
 });
-

@@ -138,6 +138,7 @@ def generate_two_view_orthosis(
     clearance = _number(params, "ring_clearance_mm", 2.0, 0.0, 8.0) / 1000.0
     band_width = _number(params, "ring_band_width_mm", 6.0, 2.0, 20.0) / 1000.0
     wall = _number(params, "ring_wall_mm", 2.0, 1.0, 8.0) / 1000.0
+    channel_wall = 0.0012
     include_thumb = _boolean(params, "include_thumb", True)
 
     overhang_multiplier = float(params.get("overhang_size_multiplier", 1.0))
@@ -173,15 +174,17 @@ def generate_two_view_orthosis(
         parts: List[trimesh.Trimesh] = []
         digit_points = points_xy[list(ids)]
         radii_z: List[float] = []
+        ring_centers: List[np.ndarray] = []
 
         for ordinal, landmark_offset in enumerate(ring_locations[digit_name]):
-            landmark_id = ids[landmark_offset]
-            before = ids[max(0, landmark_offset - 1)]
-            after = ids[min(3, landmark_offset + 1)]
-            axis = points_xy[after] - points_xy[before]
+            segment_start = points_xy[ids[landmark_offset]]
+            segment_end = points_xy[ids[landmark_offset + 1]]
+            ring_center = (segment_start + segment_end) * 0.5
+            ring_centers.append(ring_center)
+            axis = segment_end - segment_start
             circumference = circumferences[digit_name] * scale_factors[digit_name][ordinal]
             ring, vertical_radius = _closed_ring(
-                points_xy[landmark_id],
+                ring_center,
                 axis,
                 circumference,
                 palm_thickness,
@@ -198,24 +201,25 @@ def generate_two_view_orthosis(
             radii_z.append(vertical_radius)
 
         tip_point = points_xy[ids[-1]]
-        sensor_cap = _rectangular_sensor_cap(
-            np.array([tip_point[0], tip_point[1], radii_z[-1]]),
-            radii_z[-1] * 0.8,
-            radii_z[-1] * 0.8,
-            radii_z[-1] * 1.2,
-        )
-        parts.append(sensor_cap)
-        part_meshes["%s_sensor_cap" % digit_name] = sensor_cap
 
-        highest_ring_id = ids[ring_locations[digit_name][0]]
-        highest_ring_point = points_xy[highest_ring_id]
-
-        overhang_width = radii_z[0] * 1.8 * overhang_multiplier
-        overhang_depth = radii_z[0] * 1.0 * overhang_multiplier
-        overhang_height = radii_z[0] * 0.5 * overhang_multiplier
-        overhang = _flat_connector(
-            np.array([tip_point[0], tip_point[1], radii_z[-1]]),
-            np.array([highest_ring_point[0], highest_ring_point[1], radii_z[0]]),
+        overhang_width = radii_z[-1] * 1.8 * overhang_multiplier
+        overhang_height = radii_z[-1] * 0.5 * overhang_multiplier
+        tip_ring_point = ring_centers[-1]
+        to_tip = tip_point - tip_ring_point
+        to_tip_length = float(np.linalg.norm(to_tip))
+        if to_tip_length < 1e-6:
+            raise PipelineError("A fingertip landmark overlaps its last joint; move the points apart.")
+        to_tip = to_tip / to_tip_length
+        finger_radius_z = radii_z[-1] - wall
+        strap_z = -(finger_radius_z + clearance) - overhang_height * 0.5
+        tip_reach = to_tip_length + finger_radius_z + clearance + overhang_height * 0.5
+        rail_top_z = max(radii_z) + 0.001
+        overhang_start = np.array([tip_ring_point[0], tip_ring_point[1], strap_z])
+        overhang_corner = np.array([*(tip_ring_point + to_tip * tip_reach), strap_z])
+        overhang = _arched_connector(
+            overhang_start,
+            overhang_corner,
+            np.array([overhang_corner[0], overhang_corner[1], rail_top_z]),
             overhang_width,
             overhang_height,
         )
@@ -230,11 +234,22 @@ def generate_two_view_orthosis(
         else:
             root = points_xy[0] * 0.20 + points_xy[first_id] * 0.80
         first_ring_point = points_xy[first_id]
-        connector = _flat_connector(
-                np.array([root[0], root[1] - 0.004, palm_thickness * 0.5 + plate_thickness]),
-                np.array([first_ring_point[0], first_ring_point[1], rail_height]),
+        palm_link_start = np.array([root[0], root[1] - 0.004])
+        finger_axis = points_xy[ids[1]] - first_ring_point
+        finger_axis = finger_axis / float(np.linalg.norm(finger_axis))
+        palm_link_start = first_ring_point - finger_axis * float(
+            np.linalg.norm(first_ring_point - palm_link_start)
+        )
+        platform_length = 0.012
+        platform_overlap = 0.0005
+        platform_back = first_ring_point - finger_axis * (platform_length * 0.5 - platform_overlap)
+        platform_front = first_ring_point + finger_axis * (platform_length * 0.5 - platform_overlap)
+        connector = _hollow_connector(
+                np.array([palm_link_start[0], palm_link_start[1], palm_thickness * 0.5 + plate_thickness]),
+                np.array([platform_back[0], platform_back[1], rail_height]),
                 0.018 * connector_width_multiplier,
                 0.005 * connector_height_multiplier,
+                channel_wall,
             )
         parts.append(connector)
         part_meshes["%s_palm_link" % digit_name] = connector
@@ -245,21 +260,45 @@ def generate_two_view_orthosis(
             plate_top = palm_thickness * 0.5 + clearance + plate_thickness
             bridge = _flat_connector(
                 np.array([points_xy[anchor_id, 0], points_xy[anchor_id, 1], plate_top - 0.0005]),
-                np.array([root[0], root[1] - 0.004, rail_height]),
+                np.array([palm_link_start[0], palm_link_start[1], rail_height]),
                 0.006 * connector_width_multiplier,
                 0.003 * connector_height_multiplier,
             )
             parts.append(bridge)
             part_meshes["thumb_palm_bridge"] = bridge
         for link_index, (start, end) in enumerate(zip(ids, ids[1:]), start=1):
-            link = _flat_connector(
-                    np.array([points_xy[start, 0], points_xy[start, 1], rail_height]),
-                    np.array([points_xy[end, 0], points_xy[end, 1], rail_height]),
+            link_end = points_xy[end]
+            if end == ids[-1]:
+                link_end = overhang_corner[:2]
+            link_start = platform_front if link_index == 1 else points_xy[start]
+            link = _hollow_connector(
+                    np.array([link_start[0], link_start[1], rail_height]),
+                    np.array([link_end[0], link_end[1], rail_height]),
                     0.015 * connector_width_multiplier,
                     0.005 * connector_height_multiplier,
+                    channel_wall,
+                    closed_end=end == ids[-1],
                 )
             parts.append(link)
             part_meshes["%s_link_%d" % (digit_name, link_index)] = link
+
+        rail_width = 0.015 * connector_width_multiplier
+        spacing = min(
+            float(np.linalg.norm(points_xy[other_ids[0]] - first_ring_point))
+            for other_name, other_ids in digit_items
+            if other_name != digit_name
+        )
+        tray_margin = float(np.clip((spacing - rail_width) * 0.5 + 0.001, 0.0, 0.008))
+        platform = _sensor_platform(
+            np.array([first_ring_point[0], first_ring_point[1], rail_height]),
+            finger_axis,
+            platform_length + 0.004,
+            rail_width + 2.0 * tray_margin,
+            0.005 * connector_height_multiplier,
+            channel_wall,
+        )
+        parts.append(platform)
+        part_meshes["%s_sensor_platform" % digit_name] = platform
 
     assembled_components = []
     # STL stores triangle soup without component IDs. Tiny per-component
@@ -564,14 +603,6 @@ def _closed_ring(
     return mesh, outer_rz
 
 
-def _rectangular_sensor_cap(position: np.ndarray, width: float, depth: float, height: float) -> trimesh.Trimesh:
-    """Create a rectangular sensor cap at the finger tip."""
-    cap = trimesh.creation.box(extents=[width, depth, height])
-    cap.apply_translation([position[0], position[1], position[2] + height * 0.5])
-    trimesh.repair.fix_normals(cap)
-    return cap
-
-
 def _rectangular_finger_segment(start: np.ndarray, end: np.ndarray, width: float, depth: float) -> trimesh.Trimesh:
     """Create an open rectangular (U-shaped) finger body segment.
 
@@ -634,14 +665,6 @@ def _finger_tip_cap(position: np.ndarray, width: float, depth: float) -> trimesh
     return cap
 
 
-def _sensor_cap(position: np.ndarray, height: float, diameter: float) -> trimesh.Trimesh:
-    """Create a dome-shaped sensor cap."""
-    cap = trimesh.creation.icosphere(subdivisions=2, radius=1.0)
-    cap.apply_scale([diameter * 0.5, diameter * 0.5, height])
-    cap.apply_translation([position[0], position[1], position[2] + height * 0.5])
-    return cap
-
-
 def _flat_connector(start: np.ndarray, end: np.ndarray, width: float, height: float) -> trimesh.Trimesh:
     """Create a rectangular flat connector (like a strap) between two points."""
     direction = end - start
@@ -670,6 +693,149 @@ def _flat_connector(start: np.ndarray, end: np.ndarray, width: float, height: fl
     box.apply_transform(rotation_matrix)
     trimesh.repair.fix_normals(box)
     return box
+
+
+def _sensor_platform(
+    centre: np.ndarray,
+    axis_xy: np.ndarray,
+    length: float,
+    width: float,
+    rail_thickness: float,
+    wall: float,
+) -> trimesh.Trimesh:
+    """Flat tray on the outer (+z) side of the gap between two rail segments; its inner face is level with the channel ceiling."""
+    rail_wall = min(wall, width * 0.3, rail_thickness * 0.3)
+    bottom_w = rail_thickness * 0.5 - rail_wall
+    top_w = bottom_w + 2.0 * rail_wall
+    box = trimesh.creation.box(extents=[width, length, top_w - bottom_w])
+    local_centre = np.array([0.0, 0.0, (top_w + bottom_w) * 0.5])
+    v = np.array([axis_xy[0], axis_xy[1], 0.0])
+    u = np.array([axis_xy[1], -axis_xy[0], 0.0])
+    w = np.array([0.0, 0.0, 1.0])
+    transform = np.eye(4)
+    transform[:3, 0], transform[:3, 1], transform[:3, 2] = u, v, w
+    transform[:3, 3] = np.asarray(centre, dtype=float) + u * local_centre[0] + v * local_centre[1] + w * local_centre[2]
+    box.apply_transform(transform)
+    trimesh.repair.fix_normals(box)
+    if not box.is_watertight:
+        raise PipelineError("Could not create a watertight sensor platform mesh.")
+    return box
+
+
+def _hollow_connector(
+    start: np.ndarray,
+    end: np.ndarray,
+    width: float,
+    height: float,
+    wall: float,
+    closed_end: bool = False,
+) -> trimesh.Trimesh:
+    """Rectangular rail with a sensor channel running through its length.
+
+    The channel is open at the start and, unless closed_end is set, at the end.
+    """
+    direction = end - start
+    length = float(np.linalg.norm(direction))
+    if length < 1e-6:
+        raise PipelineError("Could not create a connector between adjacent landmarks.")
+    wall = min(wall, width * 0.3, height * 0.3, length * 0.25)
+    v = direction / length
+    u = np.cross(v, np.array([0.0, 0.0, 1.0]))
+    u = u / np.linalg.norm(u) if np.linalg.norm(u) > 1e-6 else np.array([1.0, 0.0, 0.0])
+    w = np.cross(v, u)
+
+    signs = ((-1, -1), (1, -1), (1, 1), (-1, 1))
+
+    def section(half_u: float, half_w: float, offset: float) -> List[np.ndarray]:
+        centre = (start + end) * 0.5 + v * offset
+        return [centre + u * (su * half_u) + w * (sw * half_w) for su, sw in signs]
+
+    half_len = length * 0.5
+    inner_u, inner_w = width * 0.5 - wall, height * 0.5 - wall
+    layers = [
+        section(width * 0.5, height * 0.5, -half_len),
+        section(width * 0.5, height * 0.5, half_len),
+        section(inner_u, inner_w, -half_len),
+        section(inner_u, inner_w, half_len - (wall if closed_end else 0.0)),
+    ]
+    vertices = np.asarray([p for layer in layers for p in layer])
+    o0, o1, i0, i1 = (np.arange(4) + 4 * k for k in range(4))
+    faces: List[List[int]] = []
+
+    def quad(a: int, b: int, c: int, d: int) -> None:
+        faces.extend(([a, b, c], [a, c, d]))
+
+    for i in range(4):
+        j = (i + 1) % 4
+        quad(o0[i], o0[j], o1[j], o1[i])
+        quad(i0[i], i1[i], i1[j], i0[j])
+        quad(o0[i], i0[i], i0[j], o0[j])
+        if not closed_end:
+            quad(o1[i], o1[j], i1[j], i1[i])
+    if closed_end:
+        faces.extend(([o1[0], o1[1], o1[2]], [o1[0], o1[2], o1[3]]))
+        faces.extend(([i1[0], i1[2], i1[1]], [i1[0], i1[3], i1[2]]))
+    rail = trimesh.Trimesh(vertices=vertices, faces=np.asarray(faces), process=False)
+    return rail
+
+
+def _arched_connector(
+    start: np.ndarray,
+    corner: np.ndarray,
+    end: np.ndarray,
+    width: float,
+    height: float,
+    segments: int = 24,
+) -> trimesh.Trimesh:
+    lateral = np.cross(corner - start, np.array([0.0, 0.0, 1.0]))
+    lateral_length = float(np.linalg.norm(lateral))
+    if lateral_length < 1e-6:
+        raise PipelineError("Could not create an arched connector between adjacent landmarks.")
+    lateral = lateral / lateral_length
+
+    run_vec = corner - start
+    run = float(np.linalg.norm(run_vec))
+    run_dir = run_vec / run
+    drop = abs(float(end[2] - start[2]))
+    if drop < 1e-6:
+        raise PipelineError("Could not create an arched connector between adjacent landmarks.")
+    vertical = np.array([0.0, 0.0, 1.0 if end[2] > start[2] else -1.0])
+    radius = min(drop, run) * 0.6
+    arc_center = corner - run_dir * radius + vertical * radius
+    theta = np.linspace(0.0, 0.5 * math.pi, segments)[:, None]
+    arc = arc_center + radius * (run_dir * np.sin(theta) - vertical * np.cos(theta))
+    points = np.vstack([start, arc, end])
+    segments = len(points) - 1
+    tangents = np.gradient(points, axis=0)
+    tangents = tangents / np.linalg.norm(tangents, axis=1, keepdims=True)
+    thickness = np.cross(tangents, lateral)
+
+    half_width = width * 0.5
+    half_height = height * 0.5
+    offsets = [
+        lateral * half_width + thickness * half_height,
+        -lateral * half_width + thickness * half_height,
+        -lateral * half_width - thickness * half_height,
+        lateral * half_width - thickness * half_height,
+    ]
+    vertices = np.vstack([points[i] + offsets[k][i] for i in range(segments + 1) for k in range(4)])
+    faces: List[List[int]] = []
+    for i in range(segments):
+        for k in range(4):
+            a = 4 * i + k
+            b = 4 * i + (k + 1) % 4
+            c = 4 * (i + 1) + (k + 1) % 4
+            d = 4 * (i + 1) + k
+            faces.extend(([a, b, c], [a, c, d]))
+    first = 0
+    last = 4 * segments
+    faces.extend(([first, first + 1, first + 2], [first, first + 2, first + 3]))
+    faces.extend(([last, last + 1, last + 2], [last, last + 2, last + 3]))
+    mesh = trimesh.Trimesh(vertices=vertices, faces=np.asarray(faces), process=True)
+    trimesh.repair.fix_normals(mesh)
+    if not mesh.is_watertight:
+        raise PipelineError("Could not create a watertight arched connector mesh.")
+    return mesh
 
 
 def _bar(start: np.ndarray, end: np.ndarray, radius: float) -> trimesh.Trimesh:
